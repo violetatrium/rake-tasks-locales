@@ -149,7 +149,7 @@ namespace :locales do
                     update_mapper(en_translations, locale_translations)
                   end
       if locale == :'en-US'
-        # We want only the english translations for when we send this to transifex. 
+        # We want only the english translations for when we send this to transifex.
         File.write(intermediate_file, JSON.pretty_generate(update_mapper(en_translations, {})))
       else
         File.write(intermediate_file, JSON.pretty_generate(update_mapper(en_translations, locale_db)))

@@ -1,2 +1,4 @@
+- MIN-10339 added rake tasks for updating locales
+- MIN-10339 added changelog, railtie file, and updated the gemspec
 - MIN-10339 updated README
 - MIN-10339 built initial stages of rake gem
