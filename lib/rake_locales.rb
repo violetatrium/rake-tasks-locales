@@ -4,5 +4,5 @@ require_relative "rake_locales/version"
 
 module RakeLocales
   class Error < StandardError; end
-  # Your code goes here...
+  require 'rake_locales/railtie' if defined?(Rails)
 end

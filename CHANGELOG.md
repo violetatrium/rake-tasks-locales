@@ -1,0 +1,2 @@
+- MIN-10339 updated README
+- MIN-10339 built initial stages of rake gem
