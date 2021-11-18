@@ -1,8 +1,6 @@
 # RakeLocales
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/rake_locales`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Ruby gem compiling all of the rake tasks for locales used in retroelk repository.
 
 ## Installation
 
@@ -22,14 +20,35 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Below is a list of commands you can run through the use of the `rake_locales` gem. Make sure you have pulled from the recent version of `master` branch before running `rake locales:update`.
 
-## Development
+```
+rake locales:update
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Runs all of the steps needed to update the translation files.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+```
+rake locales:update_databases
+```
+Generates an initial locale database for a new locale entry
 
-## Contributing
+```
+rake locales:transifex_export
+```
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/rake_locales.
+Generates locale files that are ready to be translated by transifex.
+
+```
+rake locales:transifex_import
+```
+
+Downloads the transifex database and update the public locales.
+
+```
+rake locales:verify
+```
+
+Verifies whether or not there are translation files that do not match or if there are English files that have not uet been translated. Prompts the user to run `rake locales:update`
+
+
