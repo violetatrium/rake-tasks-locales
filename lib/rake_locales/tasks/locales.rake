@@ -171,7 +171,7 @@ namespace :locales do
         transifex_file = Rails.root.join('locales', "transifex_#{locale}.json")
         File.write(transifex_file, JSON.pretty_generate(export_mapper(locale_db)))
       end
-      upload_url = "https://www.transifex.com/api/2/project/#{PROJECT}/resource/for_use_retroelk_transifex_enjson_1_enjson/content/"
+      upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/for_use_retroelk_transifex_enjson_1_enjson/content/"
 
       cmd = "curl -i -L --user api:#{token} -F file=@#{transifex_file}   -X PUT #{upload_url}"
       Rails.logger.info "Running this command"
