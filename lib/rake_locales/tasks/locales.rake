@@ -51,7 +51,7 @@ namespace :locales do
 
       if eng_found
         puts "string with english status found in #{intermediate_file}"
-        puts "#{TRANSLATE_HELP_MESSAGE}"
+        puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
         exit(1)
       end
 
@@ -62,7 +62,7 @@ namespace :locales do
 
       unless intermediate_strings.sort == locale_strings.sort
         puts 'intermediate strings and public strings don\'t match.'
-        puts "#{TRANSLATE_HELP_MESSAGE}"
+        puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
         exit(1)
       end
     end
@@ -110,7 +110,7 @@ namespace :locales do
   def get_translated_strings(locale)
     # Transifex has lang tags in the format es_ES
     translations = {}
-    start = "https://rest.api.transifex.com/resource_translations?filter[resource]=o:#{TRANSLATE_ORG}:p:#{TRANSLATE_PROJECT}:r:#{TRANSLATE_RESOURCE}&filter[language]=l:#{transifex_locale(locale)}"
+    start = "https://rest.api.transifex.com/resource_translations?filter[resource]=o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}&filter[language]=l:#{transifex_locale(locale)}"
     uri = URI(start)
     while uri
       req = Net::HTTP::Get.new(uri)
