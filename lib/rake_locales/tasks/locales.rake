@@ -15,8 +15,12 @@ namespace :locales do
     end
     puts "updating local dbs"
     update_databases
+    puts "updating mobile dbs"
+    update_mobile_databases
     puts "importing and updating public locales"
     update_public_locales
+    puts "importing and updating mobile locales"
+    update_mobile_locales
     puts "exporting english locale to transifex"
     transifex_export
   end
@@ -24,6 +28,11 @@ namespace :locales do
   desc 'Generate initial locale database for a new locale'
   task update_databases: [:environment] do
     update_databases
+  end
+
+  desc "Generate initial mobile locale database for a new locale"
+  task update_mobile_databases: [:environment] do
+    update_mobile_databases
   end
 
   desc 'Generate locale files ready to be translated'
@@ -42,29 +51,43 @@ namespace :locales do
       next if [:en, :'en-US', :en_US, :emo, :es, :fr, :ru].include?(locale)
       puts "verifying #{locale}"
       intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
+      mobile_intermediate_file = Rails.root.join('locales/mobile', "intermediate_#{locale}.json")
+
       locale_file = Rails.root.join('public', 'locales', "#{locale}.json")
+      mobile_locale_file = Rails.root.join('public', 'locales/mobile', "#{locale}.json")
 
-      eng_found = false
-      File.open(intermediate_file) do |file|
-        eng_found = file.find { |line| line.match?(/status.*(english|modified)/) }
-      end
+     check_for_untranslated_string(intermediate_file)
+     check_for_untranslated_string(mobile_intermediate_file)
 
-      if eng_found
-        puts "string with english status found in #{intermediate_file}"
-        puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
-        exit(1)
-      end
+      check_for_mismatched_strings(intermediate_file, locale_file)
+      check_for_mismatched_strings(mobile_intermediate_file, mobile_locale_file)
+    end
+  end
 
-      intermediate_db = JSON.parse(File.read(intermediate_file))
-      locale_strings = get_curr_locale_strings(locale_file)
-      intermediate_db = JSON.parse(File.read(intermediate_file))
-      intermediate_strings = get_paths('text', intermediate_db).map { |path| intermediate_db.dig(*path)['text'] }
+  def check_for_untranslated_string(file)
+    eng_found = false
 
-      unless intermediate_strings.sort == locale_strings.sort
-        puts 'intermediate strings and public strings don\'t match.'
-        puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
-        exit(1)
-      end
+    File.open(intermediate_file) do |file|
+      eng_found = file.find { |line| line.match?(/status.*(english|modified)/) }
+    end
+
+    if eng_found
+      puts "string with english status found in #{intermediate_file}"
+      puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
+      exit(1)
+    end
+  end
+
+  def check_for_mismatched_strings(intermediate_file, locale_file)
+    intermediate_db = JSON.parse(File.read(intermediate_file))
+    locale_strings = get_curr_locale_strings(locale_file)
+    intermediate_db = JSON.parse(File.read(intermediate_file))
+    intermediate_strings = get_paths('text', intermediate_db).map { |path| intermediate_db.dig(*path)['text'] }
+
+    unless intermediate_strings.sort == locale_strings.sort
+      puts 'intermediate strings and public strings don\'t match.'
+      puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
+      exit(1)
     end
   end
 
@@ -74,6 +97,45 @@ namespace :locales do
       puts "updating public/locales/#{locale}.json"
       intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
       locale_file = Rails.root.join('public/locales',"#{locale}.json")
+      if File.exist?(intermediate_file)
+        locale_db = JSON.parse(File.read(intermediate_file))
+        translations = get_translated_strings(locale)
+
+        l = get_paths("text", locale_db) do  |v|
+          v['status'] != 'reviewed'
+        end
+
+        l.each do |path|
+          translation = translations[path_hash(path)]
+          i18n_obj = locale_db.dig(*path)
+
+          if translation
+            i18n_obj['text'] = translation
+            i18n_obj['status'] = 'reviewed'
+          elsif i18n_obj['status'] != 'machine'
+            machine_translation = get_machine_translation(locale_db.dig(*path)['text'], locale)
+            i18n_obj['text'] = machine_translation
+            i18n_obj['status'] = 'machine'
+          end
+        end
+
+        File.write(intermediate_file, JSON.pretty_generate(locale_db))
+        # Now save it to public locales
+        get_paths('text', locale_db).each do |path|
+          deep_set(locale_db, locale_db.dig(*path)['text'], *path)
+        end
+
+        File.write(locale_file, JSON.pretty_generate( {"#{locale}": locale_db }))
+      end
+    end
+  end
+
+  def update_mobile_locales
+    Rails.application.config.i18n.available_locales.each do |locale|
+      next if [:en, :'en-US', :en_US, :emo, :es, :fr, :ru].include?(locale)
+      puts "updating public/locales/mobile/#{locale}.json"
+      intermediate_file = Rails.root.join('locales/mobile', "intermediate_#{locale}.json")
+      locale_file = Rails.root.join('public/locales/mobile',"#{locale}.json")
       if File.exist?(intermediate_file)
         locale_db = JSON.parse(File.read(intermediate_file))
         translations = get_translated_strings(locale)
@@ -131,6 +193,7 @@ namespace :locales do
 
   def update_databases
     en_translations = {}
+
     Dir.glob(Rails.root.join('public', 'locales', "*en-US.json")).each do |en_path|
       en_translations.merge!(JSON.parse(File.read(en_path))['en-US'])
     end
@@ -157,6 +220,35 @@ namespace :locales do
     end
   end
 
+  def update_mobile_databases
+    mobile_en_translations = {}
+
+    Dir.glob(Rails.root.join('public', 'locales/mobile', "*en-US.json")).each do |en_path|
+      mobile_en_translations.merge!(JSON.parse(File.read(en_path))['en-US'])
+    end
+    Rails.application.config.i18n.available_locales.each do |locale|
+      next if [:en, :en_US, :emo, :es, :fr, :ru].include?(locale)
+      puts "updating locales/mobile/intermediate_#{locale}.json"
+
+      mobile_intermediate_file = Rails.root.join('locales/mobile', "intermediate_#{locale}.json")
+      mobile_locale_db = if File.exist?(mobile_intermediate_file)
+                    JSON.parse(File.read(mobile_intermediate_file))
+                  else
+                    mobile_locale_translations = {}
+                    Dir.glob(Rails.root.join('public', 'locales/mobile', "*#{locale}.json")).each do |locale_path|
+                      mobile_locale_translations.merge!(JSON.parse(File.read(locale_path))[locale.to_s])
+                    end
+                    update_mapper(mobile_en_translations, mobile_locale_translations)
+                  end
+      if locale == :'en-US'
+        # We want only the english translations for when we send this to transifex.
+        File.write(mobile_intermediate_file, JSON.pretty_generate(update_mapper(mobile_en_translations, {})))
+      else
+        File.write(mobile_intermediate_file, JSON.pretty_generate(update_mapper(mobile_en_translations, mobile_locale_db)))
+      end
+    end
+  end
+
   def transifex_export
     # only want to send en-US up
     locales = [:'en-US']
@@ -165,10 +257,19 @@ namespace :locales do
       puts "Sending #{locale} to transifex for translating"
 
       intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
+      mobile_intermediate_file = Rails.root.join('locales/mobile', "intermediate_#{locale}.json")
+
       if File.exist?(intermediate_file)
         locale_db = JSON.parse(File.read(intermediate_file))
 
         transifex_file = Rails.root.join('locales', "transifex_#{locale}.json")
+        File.write(transifex_file, JSON.pretty_generate(export_mapper(locale_db)))
+      end
+
+      if File.exist?(mobile_intermediate_file)
+        locale_db = JSON.parse(File.read(mobile_intermediate_file))
+
+        transifex_file = Rails.root.join('locales/mobile', "transifex_#{locale}.json")
         File.write(transifex_file, JSON.pretty_generate(export_mapper(locale_db)))
       end
       upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/for_use_retroelk_transifex_enjson_1_enjson/content/"
