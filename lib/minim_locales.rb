@@ -102,108 +102,43 @@ module MinimLocales
     # Update public locales command
 
     def update_public_locales
-      Rails.application.config.i18n.available_locales.each do |locale|
-        next if [:en, :'en-US', :en_US, :emo, :es, :fr, :ru].include?(locale)
-        puts "updating public/locales/#{locale}.json"
-        intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
-        locale_file = Rails.root.join('public/locales',"#{locale}.json")
+      ENV['SUPPORTED_LOCALES'].split(',').each do |locale|
+        next if locale == 'en-US'
+
+        intermediate_file = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json"
+        locale_file = "#{ENV['PUBLIC_LOCALES_DIRECTORY']}/#{locale}.json"
+
         if File.exist?(intermediate_file)
           locale_db = JSON.parse(File.read(intermediate_file))
-          translations = get_translated_strings(locale)
+          translations = TransifexHelper.get_translated_strings(locale)
 
           l = get_paths("text", locale_db) do  |v|
             v['status'] != 'reviewed'
           end
 
           l.each do |path|
-            translation = translations[path_hash(path)]
+            translation = translations[TransifexHelper.translation_path(path)]
             i18n_obj = locale_db.dig(*path)
 
             if translation
               i18n_obj['text'] = translation
               i18n_obj['status'] = 'reviewed'
             elsif i18n_obj['status'] != 'machine'
-              machine_translation = get_machine_translation(locale_db.dig(*path)['text'], locale)
+              machine_translation = GoogleTranslateHelper.get_translation(locale_db.dig(*path)['text'], locale)
               i18n_obj['text'] = machine_translation
               i18n_obj['status'] = 'machine'
             end
           end
 
           File.write(intermediate_file, JSON.pretty_generate(locale_db))
-          # Now save it to public locales
+
           get_paths('text', locale_db).each do |path|
             deep_set(locale_db, locale_db.dig(*path)['text'], *path)
           end
 
-          File.write(locale_file, JSON.pretty_generate( {"#{locale}": locale_db }))
+          File.write(locale_file, JSON.pretty_generate({ "#{locale}": locale_db }))
         end
       end
-    end
-
-    def get_translated_strings(locale)
-      # Transifex has lang tags in the format es_ES
-      translations = {}
-      start = "https://rest.api.transifex.com/resource_translations?filter[resource]=o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}&filter[language]=l:#{transifex_locale(locale)}"
-      uri = URI(start)
-      while uri
-        req = Net::HTTP::Get.new(uri)
-        req['Authorization'] = "Bearer #{token}"
-        res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme =='https') {|http|
-          http.request(req)
-        }
-        transifex_json = JSON.parse(res.body)
-        transifex_json['data'].each { |t| translations[t.dig("relationships", "resource_string", "data", "id").match(/:s:(.*)$/)[1]] = t.dig('attributes', 'strings', 'other') }
-        begin
-          uri = URI(transifex_json['links']['next'])
-        rescue
-          uri = nil
-        end
-      end
-      translations
-    end
-
-    def translate_string(string, locale)
-      translate = Google::Cloud::Translate::V2.new
-      translate.translate(string, to: locale).text
-    end
-
-    def get_machine_translation(str, locale)
-      # replace i18n vars with uuid
-      initial = []
-      vars = []
-
-      processed = str.gsub(/%\{.+?\}/) do |s|
-        new_key = "temp_18n_machine_key_#{initial.length}"
-        vars.push(new_key)
-        initial.push(s)
-        new_key
-      end
-
-      translated = translate_string(processed, google_locale(locale))
-      initial.each_with_index do |init, i|
-        translated.gsub!(/#{vars[i]}/, init)
-      end
-
-      translated
-    end
-
-    def token
-      ENV['TRANSIFEX_BEARER_TOKEN']
-    end
-
-    def google_locale(locale)
-      locale.to_s.gsub(/[\-_].*/, '')
-    end
-
-    def transifex_locale(locale)
-      locale.to_s.sub('-', '_')
-    end
-
-    # transifex uses the md5 hash of the path as a resource strings identifier.
-    # NOTE: Transifex combines the path with the context of the string. If we begin adding contexts to resource strings, this will not work.
-    def path_hash(path)
-      path_key = path.join('.')
-      Digest::MD5.hexdigest([path_key, ''].join(':'))
     end
 
     # gets the path for a key.
@@ -246,7 +181,7 @@ module MinimLocales
         end
         upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/for_use_retroelk_transifex_enjson_1_enjson/content/"
 
-        cmd = "curl -i -L --user api:#{token} -F file=@#{transifex_file}   -X PUT #{upload_url}"
+        cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
         Rails.logger.info "Running this command"
         Rails.logger.info cmd
         if system(cmd)
