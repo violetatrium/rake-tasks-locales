@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "lib/rake_locales/version"
+require_relative "lib/minim_locales/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "rake_locales"
+  spec.name          = "minim_locales"
   spec.version       = RakeLocales::VERSION
   spec.authors       = ["BSalemi"]
   spec.email         = ["briandsalemi@gmail.com"]

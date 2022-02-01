@@ -7,7 +7,7 @@ Ruby gem compiling all of the rake tasks for locales used in retroelk repository
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rake_locales'
+gem 'minim_locales'
 ```
 
 And then execute:
@@ -16,11 +16,11 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install rake_locales
+    $ gem install minim_locales
 
 ## Usage
 
-Below is a list of commands you can run through the use of the `rake_locales` gem. Make sure you have pulled from the recent version of `master` branch before running `rake locales:update`.
+Below is a list of commands you can run through the use of the `minim_locales` gem. Make sure you have pulled from the recent version of `master` branch before running `rake locales:update`.
 
 ```
 rake locales:update
