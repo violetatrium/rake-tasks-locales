@@ -211,30 +211,29 @@ module MinimLocales
     # Verify command
 
     def verify
-      Rails.application.config.i18n.available_locales.each do |locale|
-        next if [:en, :'en-US', :en_US, :emo, :es, :fr, :ru].include?(locale)
-        puts "verifying #{locale}"
-        intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
-        locale_file = Rails.root.join('public', 'locales', "#{locale}.json")
+      ENV['SUPPORTED_LOCALES'].split(',') do |locale|
+        puts "Verifying #{locale}"
+
+        intermediate_file_path = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json"
+        locale_file = "#{ENV['PUBLIC_LOCALES_DIRECTORY']}/#{locale}.json"
 
         eng_found = false
-        File.open(intermediate_file) do |file|
+        File.open(intermediate_file_path) do |file|
           eng_found = file.find { |line| line.match?(/status.*(english|modified)/) }
         end
 
         if eng_found
-          puts "string with english status found in #{intermediate_file}"
+          puts "String with english status found in #{intermediate_file_path}"
           puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
           exit(1)
         end
 
-        intermediate_db = JSON.parse(File.read(intermediate_file))
+        intermediate_db = JSON.parse(File.read(intermediate_file_path))
         locale_strings = get_curr_locale_strings(locale_file)
-        intermediate_db = JSON.parse(File.read(intermediate_file))
         intermediate_strings = get_paths('text', intermediate_db).map { |path| intermediate_db.dig(*path)['text'] }
 
         unless intermediate_strings.sort == locale_strings.sort
-          puts 'intermediate strings and public strings don\'t match.'
+          puts 'Intermediate strings and public strings don\'t match.'
           puts "#{ENV['TRANSLATE_HELP_MESSAGE']}"
           exit(1)
         end
