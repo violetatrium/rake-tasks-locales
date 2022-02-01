@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-
-class CLI < Thor
-end
-
-CLI.start(ARGV)
