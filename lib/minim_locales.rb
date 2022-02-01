@@ -2,7 +2,6 @@
 
 require 'dotenv/load'
 require 'digest'
-require "google/cloud/translate/v2"
 require 'json'
 
 require_relative "minim_locales/version"
@@ -166,44 +165,45 @@ module MinimLocales
     # Transifex export command
 
     def transifex_export
-      # only want to send en-US up
-      locales = [:'en-US']
-      locales.each do |locale|
-        next unless [:'en-US'].include?(locale)
-        puts "Sending #{locale} to transifex for translating"
+      locale = 'en-US'
+      intermediate_file_path = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json")
 
-        intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
-        if File.exist?(intermediate_file)
-          locale_db = JSON.parse(File.read(intermediate_file))
+      puts "Uploading #{locale} to transifex for translating"
 
-          transifex_file = Rails.root.join('locales', "transifex_#{locale}.json")
-          File.write(transifex_file, JSON.pretty_generate(export_mapper(locale_db)))
-        end
-        upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/for_use_retroelk_transifex_enjson_1_enjson/content/"
+      if File.exist?(intermediate_file_path)
+        intermediate_db = JSON.parse(File.read(intermediate_file_path))
 
-        cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
-        Rails.logger.info "Running this command"
-        Rails.logger.info cmd
-        if system(cmd)
-          puts "Successfully uploaded transifex db"
-        else
-          puts "Command failed to upload"
-        end
+        transifex_file = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/transifex_#{locale}.json"
+        File.write(transifex_file, JSON.pretty_generate(prepare_intermediates_for_export(intermediate_db)))
+      else
+        STDERR.puts("Intermediate file for #{locale} does not exist!")
+        STDERR.puts("Run the update_intermediates command to generate it")
+        STDERR.puts("Aborting!")
+        exit 1
+      end
+
+      upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
+
+      cmd = "curl -i -L --user api:#{token} -F file=@#{transifex_file} -X PUT #{upload_url}"
+      if system(cmd)
+        puts "Successfully uploaded transifex db"
+      else
+        puts "Failed to upload"
       end
     end
 
-    def export_mapper(locale)
+    def prepare_intermediates_for_export(locale)
       if locale.key?("en_hash")
-          case locale['status']
-          when 'english'
-            { 'string' => locale['text'] }
-          when 'modified'
-            { 'string' => locale['new_text'] }
-          else
-            nil
-          end
+        case locale['status']
+        when 'english'
+          { 'string' => locale['text'] }
+        when 'modified'
+          { 'string' => locale['new_text'] }
+        else
+          nil
+        end
       else
-        hash = Hash[*locale.flat_map { |k, v| [k, export_mapper(v)] }].compact
+        hash = Hash[*locale.flat_map { |k, v| [k, prepare_intermediates_for_export(v)] }].compact
         hash.presence
       end
     end
