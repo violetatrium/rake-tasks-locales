@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'dotenv/load'
 require 'digest'
 require "google/cloud/translate/v2"
 require 'json'
