@@ -24,7 +24,7 @@ module MinimLocales
       end
 
       puts "updating local dbs"
-      update_databases
+      update_intermediate_locales
       puts "importing and updating public locales"
       update_public_locales
       puts "exporting english locale to transifex"
@@ -33,47 +33,69 @@ module MinimLocales
 
     # Update databases command
 
-    def update_databases
+    def update_intermediate_locales
       en_translations = {}
-      Dir.glob(Rails.root.join('public', 'locales', "*en-US.json")).each do |en_path|
-        en_translations.merge!(JSON.parse(File.read(en_path))['en-US'])
-      end
-      Rails.application.config.i18n.available_locales.each do |locale|
-        next if [:en, :en_US, :emo, :es, :fr, :ru].include?(locale)
-        puts "updating locales/intermediate_#{locale}.json"
 
-        intermediate_file = Rails.root.join('locales', "intermediate_#{locale}.json")
-        locale_db = if File.exist?(intermediate_file)
-                      JSON.parse(File.read(intermediate_file))
-                    else
-                      locale_translations = {}
-                      Dir.glob(Rails.root.join('public', 'locales', "*#{locale}.json")).each do |locale_path|
-                        locale_translations.merge!(JSON.parse(File.read(locale_path))[locale.to_s])
-                      end
-                      update_mapper(en_translations, locale_translations)
-                    end
-        if locale == :'en-US'
-          # We want only the english translations for when we send this to transifex.
-          File.write(intermediate_file, JSON.pretty_generate(update_mapper(en_translations, {})))
-        else
-          File.write(intermediate_file, JSON.pretty_generate(update_mapper(en_translations, locale_db)))
+      Dir.glob("#{ENV['PUBLIC_LOCALES_DIRECTORY']}/*en-US.json").each do |en_path|
+        new_en_translations = JSON.parse(File.read(en_path))['en-US']
+
+        duplicate_keys = en_translations.keys & new_en_translations.keys
+        if duplicate_keys.length > 0
+          STDERR.puts('Found duplicate top level keys in the English translation files')
+          STDERR.puts('Having duplicate keys could cause some translations to be overwritten')
+          STDERR.puts('Detected keys were:')
+          STDERR.puts("- #{duplicate_keys.join("\n- ")}")
+          exit 1
         end
+
+        en_translations.merge!(new_en_translations)
+      end
+
+      ENV['SUPPORTED_LOCALES'].split(',').each do |locale|
+        intermediate_file_path = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json"
+        puts "Updating #{intermediate_file_path}"
+
+        if locale == :'en-US'
+          File.write(intermediate_file, JSON.pretty_generate(update_or_create_intermediate_database(en_translations, {})))
+          next
+        end
+
+        intermediate_db = nil
+
+        if File.exist?(intermediate_file_path)
+          intermediate_db = JSON.parse(File.read(intermediate_file_path))
+          intermediate_db = update_or_create_intermediate_database(en_translations, intermediate_db)
+        else
+          locale_translations = {}
+
+          Dir.glob("#{ENV['PUBLIC_LOCALES_DIRECTORY']}/*#{locale}.json").each do |locale_path|
+            locale_translations.merge!(JSON.parse(File.read(locale_path))[locale.to_s])
+          end
+
+          intermediate_db = update_or_create_intermediate_database(en_translations, locale_translations)
+        end
+
+        File.write(intermediate_file_path, JSON.pretty_generate(intermediate_db))
       end
     end
 
-    def update_mapper(en, locale)
+    def update_or_create_intermediate_database(en, locale)
       if en.is_a?(String)
-        if locale.nil?
-          { 'text' => en, 'en_hash' => Digest::SHA1.hexdigest(en), 'status' => 'english' }
-        elsif locale.is_a?(String)
-          { 'text' => locale, 'en_hash' => Digest::SHA1.hexdigest(en), 'status' => 'reviewed' }
-        elsif locale['en_hash'] == Digest::SHA1.hexdigest(en)
-          locale
-        else
-          locale.merge('status' => 'modified', 'text' => en)
-        end
+        generate_intermediate_data(en, locale)
       else
-        Hash[*en.flat_map { |k, v| [k, update_mapper(v, locale&.dig(k))] }]
+        Hash[*en.flat_map { |k, v| [k, update_or_create_intermediate_database(v, locale&.dig(k))] }]
+      end
+    end
+
+    def generate_intermediate_data(en, locale)
+      if locale.nil?
+        { 'text' => en, 'en_hash' => Digest::SHA1.hexdigest(en), 'status' => 'english' }
+      elsif locale.is_a?(String)
+        { 'text' => locale, 'en_hash' => Digest::SHA1.hexdigest(en), 'status' => 'reviewed' }
+      elsif locale['en_hash'] == Digest::SHA1.hexdigest(en)
+        locale
+      else
+        locale.merge('status' => 'modified', 'text' => en)
       end
     end
 
