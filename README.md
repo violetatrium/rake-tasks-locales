@@ -1,6 +1,6 @@
 # RakeLocales
 
-Ruby gem compiling all of the rake tasks for locales used in retroelk repository.
+Ruby gem compiling all of the tasks used for localization of our projects.
 
 ## Installation
 
@@ -23,32 +23,28 @@ Or install it yourself as:
 Below is a list of commands you can run through the use of the `minim_locales` gem. Make sure you have pulled from the recent version of `master` branch before running `rake locales:update`.
 
 ```
-rake locales:update
+bundle exec minim_locales update
 ```
-
 Runs all of the steps needed to update the translation files.
 
 ```
-rake locales:update_databases
+bundle exec minim_locales update_intermediate_locales
 ```
 Generates an initial locale database for a new locale entry
 
 ```
-rake locales:transifex_export
+bundle exec minim_locales update_public_locales
 ```
-
-Generates locale files that are ready to be translated by transifex.
-
-```
-rake locales:transifex_import
-```
-
 Downloads the transifex database and update the public locales.
 
 ```
-rake locales:verify
+bundle exec minim_locales transfiex_export
 ```
+Generates locale files that are ready to be translated by transifex.
 
+```
+bundle exec minim_locales verify
+```
 Verifies whether or not there are translation files that do not match or if there are English files that have not uet been translated. Prompts the user to run `rake locales:update`
 
 
