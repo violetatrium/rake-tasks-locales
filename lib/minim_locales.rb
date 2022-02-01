@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require 'digest'
 require "google/cloud/translate/v2"
+require 'json'
 
 require_relative "minim_locales/version"
 
