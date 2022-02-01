@@ -4,6 +4,8 @@ require 'dotenv/load'
 require 'digest'
 require 'json'
 
+require_relative "minim_locales/helpers/google_translate"
+require_relative "minim_locales/helpers/transifex"
 require_relative "minim_locales/version"
 
 module MinimLocales
