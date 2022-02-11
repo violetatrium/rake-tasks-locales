@@ -7,9 +7,7 @@ require 'thor'
 class CLI < Thor
   desc "update", "Runs the update_intermediate_locales, update_public_locales and transifex_export commands in that order"
   def update
-    MinimLocales.update_intermediate_locales
-    MinimLocales.update_public_locales
-    MinimLocales.transifex_export
+    MinimLocales.update
   end
 
   desc "update_intermediate_locales", "Updates the intermediate databases for every supported locale"

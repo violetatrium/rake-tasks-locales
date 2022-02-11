@@ -10,25 +10,11 @@ require_relative "minim_locales/version"
 
 module MinimLocales
   class Error < StandardError; end
-  require 'minim_locales/railtie' if defined?(Rails)
 
   class << self
     def update
-      unless ENV['TRANSLATE_KEY']
-        puts "You need a google api key to run this task"
-        exit(1)
-      end
-
-      unless(token)
-        puts "You need a transifex api key to run this task"
-        exit(1)
-      end
-
-      puts "updating local dbs"
       update_intermediate_locales
-      puts "importing and updating public locales"
       update_public_locales
-      puts "exporting english locale to transifex"
       transifex_export
     end
 
