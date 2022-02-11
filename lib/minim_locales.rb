@@ -193,7 +193,7 @@ module MinimLocales
         end
       else
         hash = Hash[*locale.flat_map { |k, v| [k, prepare_intermediates_for_export(v)] }].compact
-        hash.presence
+        hash.keys.length > 0 ? hash : nil
       end
     end
 
