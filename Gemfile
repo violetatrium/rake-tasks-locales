@@ -6,5 +6,6 @@ source "https://rubygems.org"
 gemspec
 
 gem "dotenv"
+gem 'google-cloud-translate'
 gem "rake", "~> 13.0"
 gem "thor"
