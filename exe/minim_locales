@@ -17,6 +17,8 @@ class CLI < Thor
   option :env
   def update_intermediate_locales
     Dotenv.overload(".env.#{options[:env]}") if options[:env]
+    puts options[:env]
+    ENV['SUPPORTED_LOCALES']
     MinimLocales.update_intermediate_locales
   end
 
