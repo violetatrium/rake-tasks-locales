@@ -156,7 +156,7 @@ module MinimLocales
 
     def transifex_export
       locale = 'en-US'
-      intermediate_file_path = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json")
+      intermediate_file_path = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/intermediate_#{locale}.json"
 
       puts "Uploading #{locale} to transifex for translating"
 
