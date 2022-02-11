@@ -26,8 +26,8 @@ class CLI < Thor
   end
 
   desc "verify", "Verifies whether or not there are translation files that do not match or if there are English files that have not uet been translated."
-  def transifex_export
-    MinimLocales.transifex_export
+  def verify
+    MinimLocales.verify
   end
 end
 
