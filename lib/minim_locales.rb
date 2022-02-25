@@ -164,6 +164,10 @@ module MinimLocales
 
         transifex_file = "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/transifex_#{locale}.json"
         File.write(transifex_file, JSON.pretty_generate(prepare_intermediates_for_export(intermediate_db)))
+
+        puts "#{ENV['INTERMEDIATE_LOCALES_DIRECTORY']}/transifex_#{locale}.json"
+        puts "DONE, SMOKED EM"
+        puts "SHEEEEESH"
       else
         STDERR.puts("Intermediate file for #{locale} does not exist!")
         STDERR.puts("Run the update_intermediates command to generate it")
@@ -171,9 +175,9 @@ module MinimLocales
         exit 1
       end
 
-      upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
+      # upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
 
-      cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
+      # cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
       if system(cmd)
         puts "Successfully uploaded transifex db"
       else
