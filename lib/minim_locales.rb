@@ -173,7 +173,7 @@ module MinimLocales
 
       upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
 
-      cmd = "curl -i -L --user api:#{token} -F file=@#{transifex_file} -X PUT #{upload_url}"
+      cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
       if system(cmd)
         puts "Successfully uploaded transifex db"
       else
