@@ -175,6 +175,8 @@ module MinimLocales
         exit 1
       end
 
+      puts "not uploading"
+
       # upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
 
       # cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"

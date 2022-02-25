@@ -6,6 +6,9 @@ require 'thor'
 require_relative '../lib/minim_locales'
 
 class CLI < Thor
+
+  desc "fix", "fix"
+  option :env
   def version
     puts "3"
   end
@@ -13,6 +16,7 @@ class CLI < Thor
   desc "update", "Runs the update_intermediate_locales, update_public_locales and transifex_export commands in that order"
   option :env
   def update
+    puts "using #{options[:env]}"
     Dotenv.overload(".#{options[:env]}.env") if options[:env]
     MinimLocales.update
   end
