@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+require 'dotenv/load'
+require 'thor'
+
+require_relative '../lib/minim_locales'
+
+class CLI < Thor
+  desc "update", "Runs the update_intermediate_locales, update_public_locales and transifex_export commands in that order"
+  option :env
+  def update
+    Dotenv.overload(".#{options[:env]}.env") if options[:env]
+    MinimLocales.update
+  end
+
+  desc "update_intermediate_locales", "Updates the intermediate databases for every supported locale"
+  option :env
+  def update_intermediate_locales
+    Dotenv.overload(".#{options[:env]}.env") if options[:env]
+    MinimLocales.update_intermediate_locales
+  end
+
+  desc "update_public_locales", "Updates the public locales using the latest translations from transifex and google translate"
+  option :env
+  def update_public_locales
+    Dotenv.overload(".#{options[:env]}.env") if options[:env]
+    MinimLocales.update_public_locales
+  end
+
+  desc "transifex_export", "Uploads the strings contained in the english intermediates file to Transifex"
+  option :env
+  def transifex_export
+    Dotenv.overload(".#{options[:env]}.env") if options[:env]
+    MinimLocales.transifex_export
+  end
+
+  desc "verify", "Verifies whether or not there are translation files that do not match or if there are English files that have not uet been translated."
+  option :env
+  def verify
+    Dotenv.overload(".#{options[:env]}.env") if options[:env]
+    MinimLocales.verify
+  end
+end
+
+CLI.start(ARGV)

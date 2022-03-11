@@ -1,9 +1,9 @@
-require 'rake_locales'
+require 'minim_locales'
 require 'rails'
 
 module RakeLocales
   class Railtie < Rails::Railtie
-    railtie_name :rake_locales
+    railtie_name :minim_locales
 
     rake_tasks do
       path = File.expand_path(__dir__)
