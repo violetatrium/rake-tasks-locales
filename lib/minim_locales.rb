@@ -170,8 +170,7 @@ module MinimLocales
         STDERR.puts("Aborting!")
         exit 1
       end
-
-      upload_url = "https://www.transifex.com/api/2/project/#{ENV['TRANSLATE_PROJECT']}/resource/#{ENV['TRANSLATE_RESOURCE']}/content/"
+      upload_url = "https://rest.api.transifex.com/resources/o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}/content/"
 
       cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
       if system(cmd)
