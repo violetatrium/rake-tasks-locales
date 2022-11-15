@@ -10,8 +10,9 @@ module MinimLocales
         translations = {}
 
         start = "https://rest.api.transifex.com/resource_translations?filter[resource]=o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}&filter[language]=l:#{format_locale(locale)}"
-        byebug
+
         uri = URI(start)
+        
         while uri
           req = Net::HTTP::Get.new(uri)
           req['Authorization'] = "Bearer #{ENV['TRANSIFEX_BEARER_TOKEN']}"
@@ -19,6 +20,7 @@ module MinimLocales
             http.request(req)
           }
           transifex_json = JSON.parse(res.body)
+          byebug
           transifex_json['data'].each { |t| translations[t.dig("relationships", "resource_string", "data", "id").match(/:s:(.*)$/)[1]] = t.dig('attributes', 'strings', 'other') }
           begin
             uri = URI(transifex_json['links']['next'])
