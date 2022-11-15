@@ -1,6 +1,7 @@
 # require 'dotenv/load'
 
 require 'uri'
+require 'byebug'
 
 module MinimLocales
   module TransifexHelper
@@ -19,7 +20,7 @@ module MinimLocales
           res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme =='https') { |http|
             http.request(req)
           }
-          transifex_json = JSON.parse(res.body)
+          transifex_json = bundle update minim_locales
           byebug
           transifex_json['data'].each { |t| translations[t.dig("relationships", "resource_string", "data", "id").match(/:s:(.*)$/)[1]] = t.dig('attributes', 'strings', 'other') }
           begin
