@@ -111,7 +111,7 @@ module MinimLocales
             if translation
               i18n_obj['text'] = translation
               i18n_obj['status'] = 'reviewed'
-            elsif i18n_obj['status'] != 'machine'
+            elsif i18n_obj['status'] != 'machine' && i18n_obj['text'] == "Are you sure to want to stop receiving marketing communications for deals and promotions?"
               byebug
               machine_translation = GoogleTranslateHelper.get_translation(locale_db.dig(*path)['text'], locale)
               i18n_obj['text'] = machine_translation
