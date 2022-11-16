@@ -21,6 +21,9 @@ module MinimLocales
             http.request(req)
           }
           transifex_json = JSON.parse(res.body)
+          if !transifex_json['data']
+            byebug
+          end
           transifex_json['data'].each { |t| translations[t.dig("relationships", "resource_string", "data", "id").match(/:s:(.*)$/)[1]] = t.dig('attributes', 'strings', 'other') }
           begin
             uri = URI(transifex_json['links']['next'])
