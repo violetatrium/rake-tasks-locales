@@ -189,7 +189,7 @@ module MinimLocales
       request.body = "{\"data\":[{\"type\":\"resource_strings\"}, {\"strings\": \"#{locales_hash}\"}, {\"id\": \"#{ENV['TRANSLATE_ORG']}\"}]}"
 
       response = http.request(request)
-
+      byebug
       if response.kind_of? Net::HTTPSuccess
         puts "Successfully uploaded transifex db"
       else
