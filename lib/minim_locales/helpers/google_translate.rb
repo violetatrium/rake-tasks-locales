@@ -7,7 +7,7 @@ module MinimLocales
         # replace i18n vars with uuid
         initial = []
         vars = []
-        if str.class == Hash
+        if str.class != String
           byebug
         end
         processed = str.gsub(/%\{.+?\}/) do |s|
