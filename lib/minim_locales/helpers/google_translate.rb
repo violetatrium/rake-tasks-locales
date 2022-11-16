@@ -7,7 +7,9 @@ module MinimLocales
         # replace i18n vars with uuid
         initial = []
         vars = []
-
+        if str.class == Hash
+          byebug
+        end
         processed = str.gsub(/%\{.+?\}/) do |s|
           new_key = "temp_18n_machine_key_#{initial.length}"
           vars.push(new_key)
