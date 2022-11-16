@@ -2,6 +2,9 @@
 
 require 'digest'
 require 'json'
+require 'uri'
+require 'net/http'
+require 'openssl'
 
 require_relative "minim_locales/helpers/google_translate"
 require_relative "minim_locales/helpers/transifex"
@@ -170,10 +173,24 @@ module MinimLocales
         STDERR.puts("Aborting!")
         exit 1
       end
-      upload_url = "https://rest.api.transifex.com/resources/o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}/"
 
-      cmd = "curl -i -L --user api:#{ENV['TRANSIFEX_BEARER_TOKEN']} -F file=@#{transifex_file} -X PUT #{upload_url}"
-      if system(cmd)
+      locales_hash = JSON.parse(File.read("#{transifex_file}"))
+
+
+      url = URI("https://rest.api.transifex.com/resource_strings")
+
+      http = Net::HTTP.new(url.host, url.port)
+      http.use_ssl = true
+
+      request = Net::HTTP::Patch.new(url)
+      request["accept"] = 'application/vnd.api+json;profile="bulk"'
+      request["content-type"] = 'application/vnd.api+json;profile="bulk"'
+      request["authorization"] = "Bearer #{ENV['TRANSIFEX_BEARER_TOKEN']}"
+      request.body = "{\"data\":[{\"type\":\"resource_strings\"}, {\"strings\": \"#{locales_hash}\"}, {\"id\": \"#{ENV['TRANSLATE_ORG']}\"}]}"
+
+      response = http.request(request)
+
+      if response.kind_of? Net::HTTPSuccess
         puts "Successfully uploaded transifex db"
       else
         puts "Failed to upload"
