@@ -187,19 +187,21 @@ module MinimLocales
       request["content-type"] = 'application/vnd.api+json;profile="bulk"'
       request["authorization"] = "Bearer #{ENV['TRANSIFEX_BEARER_TOKEN']}"
       request.body = {
-        "data":
-          [
-            {
-              "type" => "resource_strings"
-            },
-            {
+        "data" =>
+        [
+          {
+            "type" => "resource_strings"
+          },
+          {
+            "id" => "#{ENV['TRANSLATE_ORG']}"
+          },
+          {
+            "attributes" => {
               "strings" => "#{locales_hash}"
-            },
-            {
-              "id" => "#{ENV['TRANSLATE_ORG']}"
             }
-          ]
-        }.to_json
+          }
+        ]
+      }.to_json
 
       response = http.request(request)
       byebug
