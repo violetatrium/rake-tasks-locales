@@ -193,11 +193,11 @@ module MinimLocales
             "type" => "resource_strings"
           },
           {
-            "id" => "#{ENV['TRANSLATE_ORG']}"
+            "id" => ENV['TRANSLATE_ORG']
           },
           {
             "attributes" => {
-              "strings" => "#{locales_hash}"
+              "strings" => locales_hash
             }
           }
         ]
