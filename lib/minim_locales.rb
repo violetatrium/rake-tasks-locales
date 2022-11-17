@@ -174,7 +174,7 @@ module MinimLocales
         exit 1
       end
 
-      locales_hash = File.read("#{transifex_file}")
+      locales_hash = JSON.parse(File.read("#{transifex_file}"))
 
 
       url = URI("https://rest.api.transifex.com/resource_strings")
