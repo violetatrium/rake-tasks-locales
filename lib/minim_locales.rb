@@ -197,7 +197,10 @@ module MinimLocales
           },
           {
             "attributes" => {
-              "strings" => locales_hash
+              "strings" => {
+                locales_hash
+              },
+              "character_limit": 0
             }
           }
         ]
