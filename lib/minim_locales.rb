@@ -193,7 +193,7 @@ module MinimLocales
             "type" => "resource_strings"
           },
           {
-            "id" => ENV['TRANSLATE_ORG']
+            "id" => "o:#{ENV['TRANSLATE_ORG']}:p:#{ENV['TRANSLATE_PROJECT']}:r:#{ENV['TRANSLATE_RESOURCE']}"
           },
           {
             "attributes" => {
